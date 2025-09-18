@@ -21,3 +21,4 @@ build/
 .gcloudignore
 # もし docker 用があれば
 Dockerfile.local
+*.bak
