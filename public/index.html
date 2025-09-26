@@ -1,72 +1,505 @@
-<!doctype html>
+<!--
+  MAGI System - Consensus AI Platform
+  Copyright (c) 2025 [あなたの名前]
+  All Rights Reserved.
+-->
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MAGI Compare UI</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    html { color-scheme: light dark; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .grid-auto { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-    textarea { tab-size: 2; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAGI System - 合議AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .input-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .input-section textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .settings {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .setting-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .setting-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .setting-item input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status.loading {
+            display: block;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status.error {
+            display: block;
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .status.success {
+            display: block;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .results {
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .result-header h2 {
+            color: #333;
+        }
+        
+        .agreement-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .agreement-high {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .agreement-medium {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        
+        .agreement-low {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .final-answer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .final-answer h3 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .final-answer p {
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+        
+        .judge-info {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .judge-info h4 {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        
+        .judge-info p {
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .candidates {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .candidate-card {
+            background: #fafafa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .candidate-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .candidate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .candidate-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #333;
+        }
+        
+        .candidate-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .candidate-text {
+            color: #555;
+            line-height: 1.7;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-neutral-50 text-neutral-900">
-  <main class="max-w-6xl mx-auto p-6 space-y-6">
-    <header class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold tracking-tight">MAGI – Multi LLM Compare</h1>
-      <div class="text-sm text-neutral-500">同一プロンプトを OpenAI / Gemini / xAI に並列投げ</div>
-    </header>
-
-    <section class="space-y-3">
-      <label class="block text-sm font-medium">プロンプト</label>
-      <textarea id="prompt" class="w-full h-28 p-3 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例）クラウドコンピューティングを小学生にも分かるように説明して"></textarea>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="p-4 rounded-xl border bg-white">
-          <label class="flex items-center gap-2 font-medium"><input id="use-openai" type="checkbox" class="scale-110" checked>OpenAI</label>
-          <input id="model-openai" class="mt-2 w-full p-2 rounded border" value="gpt-4o-mini" />
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 MAGI System</h1>
+            <p>Grok × Gemini × Claude の合議AI システム</p>
         </div>
-        <div class="p-4 rounded-xl border bg-white">
-          <label class="flex items-center gap-2 font-medium"><input id="use-gemini" type="checkbox" class="scale-110" checked>Gemini</label>
-          <input id="model-gemini" class="mt-2 w-full p-2 rounded border" value="gemini-1.5-flash" />
+        
+        <div class="main-card">
+            <div class="input-section">
+                <label for="prompt">質問を入力してください</label>
+                <textarea id="prompt" placeholder="例: S3とGCSの違いを3点で教えてください"></textarea>
+            </div>
+            
+            <div class="settings">
+                <div class="setting-item">
+                    <label>Temperature</label>
+                    <input type="number" id="temperature" value="0.2" min="0" max="2" step="0.1">
+                </div>
+                <div class="setting-item">
+                    <label>Timeout (ms)</label>
+                    <input type="number" id="timeout" value="25000" step="1000">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-primary" id="submitBtn" onclick="submitQuery()">
+                    <span id="btnText">合議開始</span>
+                    <span id="btnSpinner" style="display:none;" class="spinner"></span>
+                </button>
+                <button class="btn btn-secondary" onclick="clearResults()">クリア</button>
+            </div>
+            
+            <div id="status" class="status"></div>
+            
+            <div id="results" class="results">
+                <div class="result-header">
+                    <h2>合議結果</h2>
+                    <span id="agreementBadge" class="agreement-badge"></span>
+                </div>
+                
+                <div class="final-answer">
+                    <h3>📋 最終回答</h3>
+                    <p id="finalAnswer"></p>
+                </div>
+                
+                <div class="judge-info">
+                    <h4>⚖️ 裁定情報</h4>
+                    <p><strong>裁定モデル:</strong> <span id="judgeModel"></span></p>
+                    <p><strong>理由:</strong> <span id="judgeReason"></span></p>
+                </div>
+                
+                <h3 style="margin-bottom: 15px; color: #666;">各AIの回答</h3>
+                <div id="candidates" class="candidates"></div>
+            </div>
         </div>
-        <div class="p-4 rounded-xl border bg-white">
-          <label class="flex items-center gap-2 font-medium"><input id="use-xai" type="checkbox" class="scale-110" checked>xAI (Grok)</label>
-          <input id="model-xai" class="mt-2 w-full p-2 rounded border" value="grok-2-latest" />
-        </div>
-      </div>
+    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-sm">temperature</label>
-          <input id="temperature" type="number" step="0.1" min="0" max="2" value="0.2" class="w-full p-2 rounded border" />
-        </div>
-        <div>
-          <label class="block text-sm">timeout (ms)</label>
-          <input id="timeout" type="number" value="25000" class="w-full p-2 rounded border" />
-        </div>
-        <div>
-          <label class="block text-sm">max_tokens (任意)</label>
-          <input id="maxTokens" type="number" class="w-full p-2 rounded border" placeholder="例: 512" />
-        </div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <button id="run" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:translate-y-[1px]">実行</button>
-        <button id="clear" class="px-3 py-2 rounded-lg border">クリア</button>
-        <div id="status" class="text-sm text-neutral-500"></div>
-      </div>
-    </section>
-
-    <section id="results" class="grid gap-4 grid-auto"></section>
-
-    <footer class="text-xs text-neutral-500 pt-6 border-t">
-      同一オリジンの <span class="mono">/compare</span> を呼び出します。
-    </footer>
-  </main>
-
-  <script src="/static/app.js"></script>
+    <script>
+        async function submitQuery() {
+            const prompt = document.getElementById('prompt').value.trim();
+            if (!prompt) {
+                showStatus('error', '質問を入力してください');
+                return;
+            }
+            
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const timeout = parseInt(document.getElementById('timeout').value);
+            
+            setLoading(true);
+            showStatus('loading', '合議中... AIが回答を生成しています');
+            
+            try {
+                const response = await fetch('/api/consensus', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        meta: {
+                            temperature: temperature,
+                            timeout_ms: timeout
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+                showStatus('success', '合議完了！');
+                
+            } catch (error) {
+                showStatus('error', `エラー: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        }
+        
+        function displayResults(data) {
+            const ratio = data.metrics?.agreement_ratio || 0;
+            const badge = document.getElementById('agreementBadge');
+            const percentage = Math.round(ratio * 100);
+            badge.textContent = `一致度: ${percentage}%`;
+            badge.className = 'agreement-badge ' + 
+                (ratio >= 0.66 ? 'agreement-high' : 
+                 ratio >= 0.33 ? 'agreement-medium' : 'agreement-low');
+            
+            document.getElementById('finalAnswer').textContent = data.final || '回答なし';
+            
+            if (data.judge) {
+                document.getElementById('judgeModel').textContent = data.judge.model || 'N/A';
+                document.getElementById('judgeReason').textContent = data.judge.reason || 'N/A';
+            }
+            
+            const candidatesDiv = document.getElementById('candidates');
+            candidatesDiv.innerHTML = '';
+            
+            if (data.candidates) {
+                data.candidates.forEach(candidate => {
+                    const card = document.createElement('div');
+                    card.className = 'candidate-card';
+                    card.innerHTML = `
+                        <div class="candidate-header">
+                            <span class="candidate-name">${formatProviderName(candidate.provider)}</span>
+                            <span class="candidate-status ${candidate.ok ? 'status-success' : 'status-error'}">
+                                ${candidate.ok ? '✓ 成功' : '✗ 失敗'}
+                            </span>
+                        </div>
+                        <div class="candidate-text">${candidate.text || candidate.error || 'エラー'}</div>
+                    `;
+                    candidatesDiv.appendChild(card);
+                });
+            }
+            
+            document.getElementById('results').classList.add('show');
+        }
+        
+        function formatProviderName(provider) {
+            const names = {
+                'grok': '🔷 Grok (xAI)',
+                'gemini': '💎 Gemini (Google)',
+                'claude': '🟣 Claude (Anthropic)'
+            };
+            return names[provider] || provider;
+        }
+        
+        function showStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+        
+        function setLoading(loading) {
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            
+            btn.disabled = loading;
+            btnText.style.display = loading ? 'none' : 'inline';
+            btnSpinner.style.display = loading ? 'inline-block' : 'none';
+        }
+        
+        function clearResults() {
+            document.getElementById('prompt').value = '';
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('status').className = 'status';
+        }
+        
+        document.getElementById('prompt').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitQuery();
+            }
+        });
+    </script>
 </body>
 </html>

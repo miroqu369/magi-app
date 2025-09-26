@@ -1,24 +1,6 @@
-# Node/JS
 node_modules/
-dist/
-.npm/
 .env
-.env.*
 *.log
-
-# Editor/OS
 .DS_Store
-*.swp
-.idea/
-.vscode/
-
-# Build artifacts
-coverage/
-build/
-.tmp/
-
-# GCP
-.gcloudignore
-# もし docker 用があれば
-Dockerfile.local
-*.bak
+secrets/
+*.key

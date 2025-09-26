@@ -1,85 +1,104 @@
-// server.js
-import { GoogleAuth } from 'google-auth-library';
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
+'use strict';
+const express = require('express');
+const path = require('path');
+const app = global.app || express();
 
-const app = express();
-const port = Number(process.env.PORT) || 8080;
-const host = '0.0.0.0';
-app.use(express.json({ limit: '1mb' }));
+// 静的ファイル配信
+app.use(express.static(path.join(__dirname, 'public')));
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// プロバイダー読み込み
+const GrokProvider = require('./providers/grok.js');
+const GeminiProvider = require('./providers/gemini.js');
+const AnthropicProvider = require('./providers/anthropic.js');
+const OpenAIProvider = require('./providers/openai.js');
 
-/* ---------- magi-app 呼び出し（ID トークン） ---------- */
-const targetAudience = process.env.API_URL; // 例: https://magi-app-398890937507.asia-northeast1.run.app
-if (!targetAudience) {
-  console.error('FATAL: API_URL is undefined'); process.exit(1);
-}
-async function callInternalApi(path, { method = 'POST', body, headers = {} } = {}) {
-  const auth = new GoogleAuth();
-  const client = await auth.getIdTokenClient(targetAudience); // UI 実行 SA で ID トークン
-  const url = `${targetAudience}${path}`;
-  const res = await client.request({
-    url, method,
-    headers: { 'Content-Type': 'application/json', ...headers },
-    data: body
-  });
-  return res.data;
-}
-
-/* ---------------------- ヘルスチェック / ステータス ---------------------- */
-app.get('/healthz', (_req, res) => res.status(200).send('ok'));
-app.get('/status', (_req, res) => {
-  res.json({
-    service: 'magi-ui',
-    region: process.env.GOOGLE_CLOUD_REGION || 'unknown',
-    api_url: targetAudience
-  });
-});
-
-/* --------------------------- UI→API 委譲エンドポイント --------------------------- */
-app.post('/compare', async (req, res) => {
+// Grok疎通確認
+app.post('/api/grok/ping', async (req, res) => {
   try {
-    const data = await callInternalApi('/compare', { body: req.body });
-    res.json(data);
-  } catch (e) {
-    const code = e?.response?.status || 500;
-    res.status(code).json({ error: e?.message, detail: e?.response?.data });
+    const grok = new GrokProvider();
+    await grok.ping();
+    const text = await grok.chat('Hello', { temperature: 0.2 });
+    res.json({ ok: true, text });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-app.post('/consensus', async (req, res) => {
+// 合議エンドポイント
+app.post('/api/consensus', async (req, res) => {
   try {
-    const data = await callInternalApi('/consensus', { body: req.body });
-    res.json(data);
-  } catch (e) {
-    const code = e?.response?.status || 500;
-    res.status(code).json({ error: e?.message, detail: e?.response?.data });
+    const { prompt, meta = {} } = req.body;
+    if (!prompt) return res.status(400).json({ error: 'prompt required' });
+
+    const timeout = meta.timeout_ms || 25000;
+    const temperature = meta.temperature ?? 0.2;
+
+    const grok = new GrokProvider();
+    const gemini = new GeminiProvider();
+    const anthropic = new AnthropicProvider();
+
+    const results = await Promise.allSettled([
+      grok.chat(prompt, { temperature }).then(text => ({ provider: 'grok', ok: true, text })),
+      gemini.chat(prompt, { temperature }).then(text => ({ provider: 'gemini', ok: true, text })),
+      anthropic.chat(prompt, { temperature }).then(text => ({ provider: 'claude', ok: true, text }))
+    ]);
+
+    const candidates = results.map(r => 
+      r.status === 'fulfilled' ? r.value : { provider: 'unknown', ok: false, error: r.reason?.message }
+    );
+
+    const successTexts = candidates.filter(c => c.ok).map(c => c.text);
+    let agreement = 0;
+    if (successTexts.length >= 2) {
+      const pairs = [];
+      for (let i = 0; i < successTexts.length; i++) {
+        for (let j = i + 1; j < successTexts.length; j++) {
+          pairs.push(similarity(successTexts[i], successTexts[j]));
+        }
+      }
+      agreement = pairs.reduce((a, b) => a + b, 0) / pairs.length;
+    }
+
+    let final = successTexts[0] || 'No answer';
+    let judge = null;
+
+    if (agreement < 0.66 && successTexts.length >= 2) {
+      const openai = new OpenAIProvider();
+      const judgePrompt = `以下の3つのAI回答を比較し、最も適切な回答を選んでJSON形式で返してください。
+必ず以下の形式で返してください：
+{
+  "winner": "grok" or "gemini" or "claude",
+  "reason": "選んだ理由",
+  "final": "最終的な回答文"
+}
+
+回答1 (Grok): ${candidates[0]?.text || 'N/A'}
+回答2 (Gemini): ${candidates[1]?.text || 'N/A'}
+回答3 (Claude): ${candidates[2]?.text || 'N/A'}`;
+
+      const judgeText = await openai.chat(judgePrompt, { temperature: 0.1 });
+      const match = judgeText.match(/\{[\s\S]*\}/);
+      if (match) {
+        judge = JSON.parse(match[0]);
+        final = judge.final || final;
+        judge.model = 'gpt-4o-mini';
+      }
+    }
+
+    res.json({
+      final,
+      judge,
+      candidates,
+      metrics: { agreement_ratio: agreement }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-/* ----------------------------- 静的配信 / 画面 ---------------------------- */
-app.use('/static', express.static(path.join(__dirname, 'public')));
-app.get('/ui', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/', (_req, res) => res.redirect('/ui'));
-
-/* -------------------------------- healthz -------------------------------- */
-app.get('/healthz', (_req, res) => res.status(200).send('ok'));
-
-/* -------------------------------- listen --------------------------------- */
-const port = process.env.PORT || 8080;
-const host = '0.0.0.0';
-
-process.on('uncaughtException', (e) => { 
-  console.error('uncaughtException', e); 
-  process.exit(1); 
-});
-process.on('unhandledRejection', (e) => { 
-  console.error('unhandledRejection', e); 
-});
-
-app.listen(port, host, () => {
-  console.log(`magi-ui listening on ${host}:${port}`);
-});
+function similarity(a, b) {
+  const words1 = new Set(a.toLowerCase().split(/\s+/));
+  const words2 = new Set(b.toLowerCase().split(/\s+/));
+  const intersection = [...words1].filter(w => words2.has(w)).length;
+  return intersection / Math.max(words1.size, words2.size);
+}
