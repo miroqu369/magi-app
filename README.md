@@ -9,7 +9,7 @@
 
 ## ⚖️ 著作権・ライセンス
 
-Copyright (c) 2025 [あなたの名前]  
+Copyright (c) 2025 [Jun Suzuki @ dogma.ai]  
 All Rights Reserved.
 
 本システムは著作権法により保護されています。  
