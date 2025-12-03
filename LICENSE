@@ -1,17 +1,21 @@
-MAGI System - Proprietary License
-Copyright (c) 2025 [あなたの名前または会社名]
+MIT License
 
-All rights reserved.
+Copyright (c) 2025 miroqu369
 
-本ソフトウェア（MAGI System）およびそれに関連するすべての
-ドキュメント、ソースコード、UI、システム設計は著作権法に
-より保護されています。
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-以下の行為は、著作権者の書面による事前許可なく禁止されます：
-- 本ソフトウェアの複製
-- 本ソフトウェアの改変
-- 本ソフトウェアの配布
-- 本ソフトウェアの商用利用
-- 本ソフトウェアのリバースエンジニアリング
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-連絡先: [あなたのメールアドレス]
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
